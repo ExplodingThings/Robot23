@@ -38,7 +38,7 @@ public class AutoFieldOrientedDriveProfiled extends ProfiledPIDCommand
      * @param stop          Set to stop or not stop motors at end.
      * @param brakes        If stopping, set brakes on or off.
      */
-    public AutoDriveProfiled(DriveBase driveBase, double distanceX, double distanceY, StopMotors stop, Brakes brakes) 
+    public AutoFieldOrientedDriveProfiled(DriveBase driveBase, double distanceX, double distanceY, StopMotors stop, Brakes brakes) 
     {
         super(
             new ProfiledPIDController(kP, kI, kD, 
@@ -133,11 +133,11 @@ public class AutoFieldOrientedDriveProfiled extends ProfiledPIDCommand
 		Util.consoleLog("end ---------------------------------------------------------------");
 	}
 
-        private void getOutputMultiplierX(double distanceX, double distanceY) {
+        private static double getOutputMultiplierX(double distanceX, double distanceY) {
                 return distanceX > distanceY ? 1 : distanceX / distanceY;
         }
 
-        private void getOutputMultiplierY(double distanceX, double distanceY) {
+        private static double getOutputMultiplierY(double distanceX, double distanceY) {
                 return distanceY > distanceX ? 1 : distanceY / distanceX;
         }
 
