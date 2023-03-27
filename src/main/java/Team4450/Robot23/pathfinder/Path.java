@@ -1,209 +1,248 @@
 package Team4450.Robot23.pathfinder;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import Team4450.Robot23.pathfinder.math.Vertex2d;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
-public class Path implements Iterable<Translation2d> {
+public class Path<T extends State<T>> implements Iterable<T>
+{
 
-    private List<Translation2d> translations;
-    private Rotation2d rotation;
-    private Translation2d start;
+    private List<T> states;
+    private Vertex2d start;
 
-    private TranslationCommand tlCommand;
-    private TransformCommand trCommand;
+    private CommandSupplier<T> command;
 
     /**
      * Constructs a path.
-     * @param tlCommand Translation command.
-     * @param trCommand Transform command.
+     * @param command Supplier of commands for command group construction.
      * @param start Start position.
-     * @param rotation Path final rotation value.
-     * @param translations List of translations to execute.
+     * @param states List of states to execute.
      */
-    public Path(TranslationCommand tlCommand, TransformCommand trCommand, Translation2d start, Rotation2d rotation, List<Translation2d> translations)
+    public Path(CommandSupplier<T> command, Vertex2d start, List<T> states)
     {
-        this.tlCommand = tlCommand;
-        this.trCommand = trCommand;
-        this.translations = translations;
-        this.rotation = rotation;
+        this.command = command;
+        this.states = states;
         this.start = start;
+    }
+
+    /**
+     * Constructs a new path from another path.
+     * @param original Path to copy from.
+     */
+    public Path(Path<T> original)
+    {
+        this.states = new ArrayList<T>(original.states);
+        this.start = original.start;
+        this.command = original.command;
     }
 
     /**
      * Gets the starting position of the path.
      * @return Starting position of the path.
      */
-    public Translation2d start()
+    public Vertex2d start()
     {
         return start;
     }
 
     /**
-     * Gets a translation by index.
-     * @param i Index of the translation.
-     * @return Translation at the specified index.
+     * Gets the list of states used by the path.
+     * @return The list of states used by the path.
      */
-    public Translation2d get(int i)
+    public List<T> states()
     {
-        return translations.get(i);
+        return states;
     }
 
     /**
-     * Removes a translation by index.
-     * @param i Index of the translation to remove.
+     * Gets the command supplier.
+     * @return The command supplier.
+     */
+    public CommandSupplier<T> command()
+    {
+        return command;
+    }
+
+    /**
+     * Gets a state by index.
+     * @param i Index of the state.
+     * @return State at the specified index.
+     */
+    public T get(int i)
+    {
+        return states.get(i);
+    }
+
+    /**
+     * Removes a state by index.
+     * @param i Index of the state to remove.
      */
     public void remove(int i)
     {
-        translations.remove(i);
+        states.remove(i);
     }
 
     /**
-     * Adds a translation at an index.
-     * @param i Index to add the translation.
-     * @param t Translation to add.
+     * Adds a state at an index.
+     * @param i Index to add the state.
+     * @param t State to add.
      */
-    public void add(int i, Translation2d t)
+    public void add(int i, T t)
     {
-        translations.add(i, t);
+        states.add(i, t);
     }
 
     /**
-     * Adds a translation at the back of the list.
-     * @param t Translation to add.
+     * Adds a state at the back of the list.
+     * @param t State to add.
      */
-    public void add(Translation2d t)
+    public void add(T t)
     {
-        translations.add(t);
+        states.add(t);
     }
 
     /**
-     * Adds all translations in a list at an index.
+     * Adds all states in a list at an index.
      * @param i Index to add at.
-     * @param t Translations to add.
+     * @param t States to add.
      */
-    public void addAll(int i, List<Translation2d> t)
+    public void addAll(int i, List<T> t)
     {
-        translations.addAll(i, t);
+        states.addAll(i, t);
     }
 
     /**
-     * Adds all translations in a list at the back of the list.
-     * @param t Translations to add.
+     * Adds all states in a list at the back of the list.
+     * @param t States to add.
      */
-    public void addAll(List<Translation2d> t)
+    public void addAll(List<T> t)
     {
-        translations.addAll(t);
+        states.addAll(t);
     }
 
     /**
-     * Adds all translations in a path at an index.
+     * Adds all states in a path at an index.
      * @param i Index to add at.
      * @param t Path to add.
      */
-    public void addAll(int i, Path p)
+    public void addAll(int i, Path<T> p)
     {
-        translations.addAll(i, p.translations);
+        states.addAll(i, p.states);
     }
 
     /**
-     * Adds all translations in a path at the back of the list.
+     * Adds all states in a path at the back of the list.
      * @param p Path to add.
      */
-    public void addAll(Path p)
+    public void addAll(Path<T> p)
     {
-        translations.addAll(p.translations);
+        states.addAll(p.states);
     }
 
     /**
-     * Gets the size of the translation list.
-     * @return Size of the translation list.
+     * Gets the size of the state list.
+     * @return Size of the state list.
      */
     public int size()
     {
-        return translations.size();
+        return states.size();
     }
 
     @Override
-    public Iterator<Translation2d> iterator() {
-        return translations.iterator();
+    public Iterator<T> iterator()
+    {
+        return states.iterator();
     }
     
     /**
-     * Constructs a sequential command group from the path.
-     * @return Instance of SequentialCommandGroup with path's translations and rotation.
+     * Adds commands for path execution to a sequential command group.
+     * @param group The command group to use.
      */
-    public SequentialCommandGroup group()
+    public void group(SequentialCommandGroup group)
     {
-        SequentialCommandGroup group = new SequentialCommandGroup();
-        for (int i = 0; i < translations.size() - 1; i++)
+        for (int i = 0; i < states.size(); i++)
         {
-            group.addCommands(tlCommand.construct(translations.get(i)));
+            group.addCommands(command.construct(states.get(i)));
         }
-        group.addCommands(trCommand.construct(new Transform2d(translations.get(translations.size() - 1), rotation)));
-        return group;
     }
 
     /**
      * Builder class for paths.
      */
-    public static class Builder
+    public static class Builder<T extends State<T>>
     {
 
-        private List<Translation2d> translations;
-        private Rotation2d rotation;
-        private Translation2d start;
+        private List<T> states = new ArrayList<>();
+        private Vertex2d start;
 
-        private TranslationCommand tlCommand;
-        private TransformCommand trCommand;
+        CommandSupplier<T> command;
 
         /**
-         * Constructs a builder with one translation.
-         * @param start Beginning of translation.
-         * @param end End of translation.
+         * Constructs a builder with one state.
+         * @param start Beginning of path.
+         * @param end First state.
          */
-        public Builder(Translation2d start, Translation2d end)
+        public Builder(Vertex2d start, T end)
         {
             this.start = start;
-            this.translations.add(end);
+            if (end != null)
+                this.states.add(end);
+        }
+        
+        /**
+         * Copies non-state parameters from another path. Only command as of now.
+         * @param original The path to copy from.
+         * @return Updated builder instance.
+         */
+        public Builder<T> blankFrom(Path<T> original)
+        {
+            return this.command(original.command());
         }
 
         /**
          * Sets the commands for command group construction.
-         * @param tlCommand Translation command.
-         * @param trCommand Transform command.
+         * @param command Supplier of commands.
          * @return Updated builder instance.
          */
-        public Builder commands(TranslationCommand tlCommand, TransformCommand trCommand)
+        public Builder<T> command(CommandSupplier<T> command)
         {
-            this.tlCommand = tlCommand;
-            this.trCommand = trCommand;
+            this.command = command;
             return this;
         }
 
         /**
-         * Adds a translation to the path.
-         * @param point Translation to add.
+         * Adds a state to the path.
+         * @param point State to add.
          * @return Updated builder instance.
          */
-        public Builder add(Translation2d point)
+        public Builder<T> add(T point)
         {
-            translations.add(point);
+            states.add(point);
             return this;
         }
 
         /**
-         * Sets rotation for the path.
-         * @param rot Rotation value.
+         * Adds a list of states to the path.
+         * @param points States to add.
          * @return Updated builder instance.
          */
-        public Builder rotation(Rotation2d rot)
+        public Builder<T> add(List<T> points)
         {
-            this.rotation = rot;
+            states.addAll(points);
+            return this;
+        }
+
+        /**
+         * Removes a state from the path.
+         * @param i Index of state to remove.
+         * @return Updated builder instance.
+         */
+        public Builder<T> remove(int i)
+        {
+            states.remove(i);
             return this;
         }
 
@@ -211,9 +250,9 @@ public class Path implements Iterable<Translation2d> {
          * Constructs the path instance.
          * @return A new path instance with specified parameters.
          */
-        public Path build()
+        public Path<T> build()
         {
-            return new Path(tlCommand, trCommand, start, rotation, translations);
+            return new Path<T>(command, start, states);
         }
     }
 }
